@@ -441,6 +441,24 @@ impl TargetInfo {
             });
         }
 
+        if target_triple.starts_with("assigner-") {
+            let flavor = if matches!(
+                crate_type,
+                CrateType::Dylib | CrateType::Cdylib | CrateType::Rlib | CrateType::Staticlib,
+            ) {
+                FileFlavor::Linkable
+            } else {
+                FileFlavor::Auxiliary
+            };
+            ret.push(FileType {
+                suffix: ".ll".to_string(),
+                prefix: "".to_string(),
+                flavor,
+                crate_type: Some(crate_type.clone()),
+                should_replace_hyphens: true,
+            });
+        }
+
         // Handle separate debug files.
         let is_apple = target_triple.contains("-apple-");
         if matches!(
@@ -500,24 +518,6 @@ impl TargetInfo {
                     should_replace_hyphens: crate_type != CrateType::Bin,
                 })
             }
-        }
-
-        if target_triple.starts_with("assigner-") {
-            let flavor = if matches!(
-                crate_type,
-                CrateType::Dylib | CrateType::Cdylib | CrateType::Rlib | CrateType::Staticlib,
-            ) {
-                FileFlavor::Linkable
-            } else {
-                FileFlavor::Auxiliary
-            };
-            ret.push(FileType {
-                suffix: ".ll".to_string(),
-                prefix: "".to_string(),
-                flavor,
-                crate_type: Some(crate_type.clone()),
-                should_replace_hyphens: true,
-            });
         }
 
         Ok(Some(ret))
