@@ -1382,8 +1382,12 @@ pub fn extern_args(
 
             let outputs = cx.outputs(&dep.unit)?;
 
-            if cx.only_requires_rmeta(unit, &dep.unit) || dep.unit.mode.is_check() {
+            if cx.only_requires_rmeta(unit, &dep.unit)
+                || dep.unit.mode.is_check()
+                || cx.bcx.target_data.short_name(&unit.kind).starts_with("assigner-")
+            {
                 // Example: rlib dependency for an rlib, rmeta is all that is required.
+                // For assigner targets rmeta is also the only thing is needed.
                 let output = outputs
                     .iter()
                     .find(|output| output.flavor == FileFlavor::Rmeta)
