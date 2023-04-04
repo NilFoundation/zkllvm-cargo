@@ -985,8 +985,16 @@ fn build_base_args(cx: &Context<'_, '_>, cmd: &mut ProcessBuilder, unit: &Unit) 
         }
     }
 
+    let assigner_target = matches!(
+        unit.kind,
+        CompileKind::Target(n) if n.rustc_target().starts_with("assigner-"),
+    );
+
     if unit.mode.is_check() {
         cmd.arg("--emit=dep-info,metadata");
+    } else if assigner_target {
+        // Explicitly enforce emit kinds for assigner target triple.
+        cmd.arg("--emit=dep-info,metadata,llvm-ir");
     } else if !unit.requires_upstream_objects() {
         // Always produce metadata files for rlib outputs. Metadata may be used
         // in this session for a pipelined compilation, or it may be used in a
