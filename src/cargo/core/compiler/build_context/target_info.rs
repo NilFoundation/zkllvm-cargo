@@ -442,21 +442,8 @@ impl TargetInfo {
         }
 
         if target_triple.starts_with("assigner-") {
-            let flavor = if matches!(
-                crate_type,
-                CrateType::Dylib | CrateType::Cdylib | CrateType::Rlib | CrateType::Staticlib,
-            ) {
-                FileFlavor::Linkable
-            } else {
-                FileFlavor::Auxiliary
-            };
-            ret.push(FileType {
-                suffix: ".ll".to_string(),
-                prefix: "".to_string(),
-                flavor,
-                crate_type: Some(crate_type.clone()),
-                should_replace_hyphens: true,
-            });
+            // Rmeta files must always be packed with the .ll files for assigner.
+            ret.push(FileType::new_rmeta());
         }
 
         // Handle separate debug files.
@@ -592,8 +579,12 @@ impl TargetInfo {
                 }
             }
         }
-        if !result.is_empty() && !crate_types.iter().any(|ct| ct.requires_upstream_objects()) {
+        if !result.is_empty()
+            && !crate_types.iter().any(|ct| ct.requires_upstream_objects())
+            && !target_triple.starts_with("assigner-")
+        {
             // Only add rmeta if pipelining.
+            // Assigner file types always contain rmeta, so no need to add it again.
             result.push(FileType::new_rmeta());
         }
         Ok((result, unsupported))
