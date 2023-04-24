@@ -1392,7 +1392,8 @@ pub fn extern_args(
 
             if cx.only_requires_rmeta(unit, &dep.unit)
                 || dep.unit.mode.is_check()
-                || cx.bcx.target_data.short_name(&unit.kind).starts_with("assigner-")
+                || (cx.bcx.target_data.short_name(&unit.kind).starts_with("assigner-")
+                    && !dep.unit.target.proc_macro())
             {
                 // Example: rlib dependency for an rlib, rmeta is all that is required.
                 // For assigner targets rmeta is also the only thing is needed.
