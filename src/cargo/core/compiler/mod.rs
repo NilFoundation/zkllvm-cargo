@@ -985,8 +985,16 @@ fn build_base_args(cx: &Context<'_, '_>, cmd: &mut ProcessBuilder, unit: &Unit) 
         }
     }
 
+    let assigner_target = matches!(
+        unit.kind,
+        CompileKind::Target(n) if n.rustc_target().starts_with("assigner-"),
+    );
+
     if unit.mode.is_check() {
         cmd.arg("--emit=dep-info,metadata");
+    } else if assigner_target {
+        // Explicitly enforce emit kinds for assigner target triple.
+        cmd.arg("--emit=dep-info,metadata,llvm-ir");
     } else if !unit.requires_upstream_objects() {
         // Always produce metadata files for rlib outputs. Metadata may be used
         // in this session for a pipelined compilation, or it may be used in a
@@ -1382,8 +1390,13 @@ pub fn extern_args(
 
             let outputs = cx.outputs(&dep.unit)?;
 
-            if cx.only_requires_rmeta(unit, &dep.unit) || dep.unit.mode.is_check() {
+            if cx.only_requires_rmeta(unit, &dep.unit)
+                || dep.unit.mode.is_check()
+                || (cx.bcx.target_data.short_name(&unit.kind).starts_with("assigner-")
+                    && !dep.unit.target.proc_macro())
+            {
                 // Example: rlib dependency for an rlib, rmeta is all that is required.
+                // For assigner targets rmeta is also the only thing is needed.
                 let output = outputs
                     .iter()
                     .find(|output| output.flavor == FileFlavor::Rmeta)

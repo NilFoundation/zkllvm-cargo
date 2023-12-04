@@ -441,6 +441,11 @@ impl TargetInfo {
             });
         }
 
+        if target_triple.starts_with("assigner-") {
+            // Rmeta files must always be packed with the .ll files for assigner.
+            ret.push(FileType::new_rmeta());
+        }
+
         // Handle separate debug files.
         let is_apple = target_triple.contains("-apple-");
         if matches!(
@@ -574,8 +579,12 @@ impl TargetInfo {
                 }
             }
         }
-        if !result.is_empty() && !crate_types.iter().any(|ct| ct.requires_upstream_objects()) {
+        if !result.is_empty()
+            && !crate_types.iter().any(|ct| ct.requires_upstream_objects())
+            && !target_triple.starts_with("assigner-")
+        {
             // Only add rmeta if pipelining.
+            // Assigner file types always contain rmeta, so no need to add it again.
             result.push(FileType::new_rmeta());
         }
         Ok((result, unsupported))
